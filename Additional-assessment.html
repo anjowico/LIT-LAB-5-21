@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saved Assessments</title>
+    <style>
+        /* General Reset */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body Styles */
+body {
+    font-family: 'Arial', sans-serif;
+    background-image: url('BG2.jpg'); /* Background image */
+    background-size: cover; /* Ensure the background image covers the screen */
+    background-position: center center; /* Center the background image */
+    background-attachment: fixed; /* Optional: Parallax effect */
+    background-color: #f5f5f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    min-height: 100vh;
+    color: #333;
+    padding-top: 20px;
+}
+        /* Header Styles */
+        h1 {
+            font-size: 2.5em;
+            color: #00796b;
+            margin-bottom: 20px;
+            text-align: center;
+            font-weight: 700;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #004d40;
+        }
+
+        /* Main Container Styling */
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            width: 90%;
+            max-width: 750px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        /* Question Box Styling */
+        .question {
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-left: 5px solid #00796b;
+            font-size: 1.1em;
+        }
+
+        .question p {
+            margin: 5px 0;
+        }
+
+        /* Input and Button Styling */
+        .question input,
+        .question button,
+        .question select {
+            width: 100%;
+            padding: 10px;
+            font-size: 1em;
+            margin-top: 10px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .question button {
+            background-color: #00796b;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .question button:hover {
+            background-color: #004d40;
+        }
+
+        .question button:active {
+            background-color: #00332f;
+        }
+
+        .question button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Feedback Message Styling */
+        .feedback {
+            color: #00796b;
+            font-weight: bold;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .feedback.correct {
+            color: green;
+            display: block;
+        }
+
+        .feedback.incorrect {
+            color: red;
+            display: block;
+        }
+
+        /* Styling for the Classroom Code */
+        .classroom-code {
+            margin-top: 20px;
+            font-size: 1.2em;
+            color: #00796b;
+        }
+
+        /* Reset Button */
+        .reset-button {
+            background-color: #ff6f61;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 1em;
+        }
+
+        .reset-button:hover {
+            background-color: #ff3d32;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .container {
+                padding: 20px;
+                width: 95%;
+            }
+
+            .question input,
+            .question button,
+            .question select {
+                font-size: 0.9em;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Additional Assessments</h1>
+
+    <!-- Classroom Code Section -->
+    <div id="classroomCodeContainer" class="container">
+        <h2>Classroom Code</h2>
+        <div id="classroomCode"></div>
+    </div>
+
+    <!-- Jumbled Words Section -->
+    <div class="container">
+        <h2>Jumbled Words</h2>
+        <div id="jumbledWordsList"></div>
+    </div>
+
+    <!-- Fill-in-the-Blank Section -->
+    <div class="container">
+        <h2>Fill in the Blank Questions</h2>
+        <div id="blankQuestionsList"></div>
+    </div>
+
+  <!-- Definitions Section -->
+  <div class="container">
+    <h2>Definitions of Terms</h2>
+    <div id="definitionsList"></div>
+</div>
+
+    <!-- Multiple Choice Questions Section -->
+    <div class="container">
+        <h2>Multiple Choice Questions</h2>
+        <div id="mcqQuestionsList"></div>
+    </div>
+
+    <button class="reset-button" id="resetButton">Reset All Answers</button>
+    <button class="reset-button" id="submitButton">Submit All Answers</button>
+
+    <div class="result" id="resultContainer"></div>
+    <div class="feedback-section" id="feedbackContainer"></div>
+
+    <script>
+        // Retrieve data from localStorage
+        const selected = JSON.parse(localStorage.getItem("selectedAssessments")) || {};
+        const classroomCode = localStorage.getItem("classroomCode") || "No classroom code saved.";
+
+        function renderClassroomCode() {
+            const codeElement = document.getElementById("classroomCode");
+            codeElement.innerHTML = `<p>${classroomCode}</p>`;
+        }
+
+        // Render Definitions
+        function renderDefinitions() {
+            const list = document.getElementById("definitionsList");
+            if (selected.definitions && selected.definitions.length > 0) {
+                list.innerHTML = selected.definitions.map((def, index) => `
+                    <div class="question">
+                        <p><strong>Definition Term: </strong>${def.word}</p>
+                        <input type="text" id="definitionInput${index}" placeholder="Enter your definition">
+                        <button onclick="checkDefinition(${index})">Check Answer</button>
+                        <p id="feedbackDefinition${index}" class="feedback"></p>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = "<p>No definitions available.</p>";
+            }
+        }
+
+        // Criteria for checking definitions
+        const criteria = (userAnswer, correctAnswer) => {
+            const missingKeywords = correctAnswer.keywords.filter(keyword => !userAnswer.toLowerCase().includes(keyword.toLowerCase()));
+
+            if (missingKeywords.length === 0 && userAnswer.toLowerCase() === correctAnswer.definition.toLowerCase()) {
+                return { isCorrect: true, points: 1, feedback: "Great job! You answered correctly." };
+            } else if (missingKeywords.length === 0) {
+                return { isCorrect: false, points: 0.5, feedback: `You missed some details. Make sure to include all key concepts. Missing keywords: ${missingKeywords.join(", ")}` };
+            } else {
+                return { isCorrect: false, points: 0, feedback: `Incorrect. Make sure to include these key concepts: ${missingKeywords.join(", ")}` };
+            }
+        }
+
+        // Check Definitions Answer
+        function checkDefinition(index) {
+            const userAnswer = document.getElementById(`definitionInput${index}`).value.trim();
+            const feedbackElement = document.getElementById(`feedbackDefinition${index}`);
+
+            if (userAnswer === "") {
+                feedbackElement.textContent = "Please enter a definition!";
+                feedbackElement.classList.remove("correct", "incorrect");
+                feedbackElement.classList.add("incorrect");
+                return;
+            }
+
+            const correctDefinition = selected.definitions[index];
+
+            const result = criteria(userAnswer, correctDefinition);
+            feedbackElement.textContent = result.feedback;
+            feedbackElement.classList.remove("correct", "incorrect");
+            feedbackElement.classList.add(result.isCorrect ? "correct" : "incorrect");
+
+            // Store the points for later submission
+            correctDefinition.userPoints = result.points;
+        }
+
+        // Render Jumbled Words
+        function renderJumbledWords() {
+            const list = document.getElementById("jumbledWordsList");
+            if (selected.jumbledWords && selected.jumbledWords.length > 0) {
+                list.innerHTML = selected.jumbledWords.map((wordObj, index) => `
+                    <div class="question">
+                        <p>Original Word: ${wordObj.originalWord}</p>
+                        <p>Jumbled Word: ${wordObj.jumbledWord}</p>
+                        <input type="text" id="answerJumbledWord${index}" placeholder="Enter your answer">
+                        <button onclick="checkJumbledWord(${index})">Check Answer</button>
+                        <p id="feedbackJumbledWord${index}" class="feedback"></p>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = "<p>No jumbled words available.</p>";
+            }
+        }
+
+        // Check Jumbled Word Answer
+        function checkJumbledWord(index) {
+            const studentAnswer = document.getElementById(`answerJumbledWord${index}`).value.trim();
+            const feedbackElement = document.getElementById(`feedbackJumbledWord${index}`);
+            const button = document.querySelector(`#jumbledWordsList button:nth-child(${index+1})`);
+
+            if (studentAnswer === "") {
+                feedbackElement.textContent = "Please enter an answer!";
+                feedbackElement.classList.remove("correct", "incorrect");
+                feedbackElement.classList.add("incorrect");
+                return;
+            }
+
+            if (studentAnswer.toLowerCase() === selected.jumbledWords[index].originalWord.toLowerCase()) {
+                feedbackElement.textContent = "Correct!";
+                feedbackElement.classList.remove("incorrect");
+                feedbackElement.classList.add("correct");
+                button.disabled = true;  // Disable button after correct answer
+            } else {
+                feedbackElement.textContent = "Incorrect. Try again!";
+                feedbackElement.classList.remove("correct");
+                feedbackElement.classList.add("incorrect");
+            }
+        }
+
+        // Render Fill-in-the-Blank Questions
+        function renderFillInBlank() {
+            const list = document.getElementById("blankQuestionsList");
+            if (selected.fillInBlank && selected.fillInBlank.length > 0) {
+                list.innerHTML = selected.fillInBlank.map((questionObj, index) => `
+                    <div class="question">
+                        <p>Fill in the blank: ${questionObj.sentence}</p>
+                        <input type="text" id="answerFillInBlank${index}" placeholder="Your answer">
+                        <button onclick="checkFillInBlank(${index})">Check Answer</button>
+                        <p id="feedbackFillInBlank${index}" class="feedback"></p>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = "<p>No fill-in-the-blank questions available.</p>";
+            }
+        }
+
+        // Check Fill-in-the-Blank Answer
+        function checkFillInBlank(index) {
+            const studentAnswer = document.getElementById(`answerFillInBlank${index}`).value.trim();
+            const feedbackElement = document.getElementById(`feedbackFillInBlank${index}`);
+
+            if (studentAnswer === "") {
+                feedbackElement.textContent = "Please enter an answer!";
+                feedbackElement.classList.remove("correct", "incorrect");
+                feedbackElement.classList.add("incorrect");
+                return;
+            }
+
+            const correctAnswer = selected.fillInBlank[index].answer;
+
+            if (studentAnswer.toLowerCase() === correctAnswer.toLowerCase()) {
+                feedbackElement.textContent = "Correct!";
+                feedbackElement.classList.remove("incorrect");
+                feedbackElement.classList.add("correct");
+            } else {
+                feedbackElement.textContent = "Incorrect. Try again!";
+                feedbackElement.classList.remove("correct");
+                feedbackElement.classList.add("incorrect");
+            }
+        }
+
+        // Render Multiple Choice Questions
+        function renderMCQs() {
+            const list = document.getElementById("mcqQuestionsList");
+            if (selected.mcq && selected.mcq.length > 0) {
+                list.innerHTML = selected.mcq.map((questionObj, index) => `
+                    <div class="question">
+                        <p>${questionObj.question}</p>
+                        ${questionObj.options.map((option, i) => `
+                            <input type="radio" name="mcq${index}" id="mcq${index}Option${i}" value="${option}">
+                            <label for="mcq${index}Option${i}">${option}</label><br>
+                        `).join('')}
+                        <button onclick="checkMCQ(${index})">Check Answer</button>
+                        <p id="feedbackMCQ${index}" class="feedback"></p>
+                    </div>
+                `).join('');
+            } else {
+                list.innerHTML = "<p>No MCQs available.</p>";
+            }
+        }
+
+        // Check MCQ Answer
+        function checkMCQ(index) {
+            const options = document.getElementsByName(`mcq${index}`);
+            let selectedOption = null;
+
+            for (const option of options) {
+                if (option.checked) {
+                    selectedOption = option.value;
+                    break;
+                }
+            }
+
+            const feedbackElement = document.getElementById(`feedbackMCQ${index}`);
+
+            if (!selectedOption) {
+                feedbackElement.textContent = "Please select an answer!";
+                feedbackElement.classList.remove("correct", "incorrect");
+                feedbackElement.classList.add("incorrect");
+                return;
+            }
+
+            if (selectedOption === selected.mcq[index].answer) {
+                feedbackElement.textContent = "Correct!";
+                feedbackElement.classList.remove("incorrect");
+                feedbackElement.classList.add("correct");
+            } else {
+                feedbackElement.textContent = "Incorrect.";
+                feedbackElement.classList.remove("correct");
+                feedbackElement.classList.add("incorrect");
+            }
+        }
+
+        // Check all answers and give feedback
+        function checkAnswers() {
+            let correctAnswers = 0;
+            let feedback = "";
+            let resultText = "<h3>Your Results</h3>";
+
+            // Check Definitions
+            if (selected.definitions && selected.definitions.length > 0) {
+                selected.definitions.forEach((def, index) => {
+                    const result = def.userPoints || 0;  // Default to 0 if no user points saved
+                    correctAnswers += result;
+                    if (result === 0) {
+                        feedback += `<p>Term: "${def.word}" - Incorrect. The correct definition is: "${def.definition}".</p>`;
+                    }
+                });
+            }
+
+            // Display result and feedback
+            resultText += `<p>Total Correct: ${correctAnswers} / ${selected.definitions.length}</p>`;
+            renderResult(feedback, resultText);
+        }
+
+        // Render feedback and results
+        function renderResult(feedbackText, resultText) {
+            const resultContainer = document.getElementById("resultContainer");
+            resultContainer.innerHTML = resultText;
+
+            const feedbackContainer = document.getElementById("feedbackContainer");
+            feedbackContainer.innerHTML = feedbackText;
+        }
+
+        // Reset all answers
+        function resetAll() {
+            localStorage.clear();
+            location.reload();
+        }
+
+        // Render everything
+        renderClassroomCode();
+        renderDefinitions();
+        renderJumbledWords();
+        renderFillInBlank();
+        renderYesNo();
+        renderMCQs();
+
+        // Add event listeners
+        document.getElementById("resetButton").addEventListener("click", resetAll);
+        document.getElementById("submitButton").addEventListener("click", checkAnswers);
+
+    </script>
+</body>
+</html>
